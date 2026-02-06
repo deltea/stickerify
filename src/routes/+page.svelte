@@ -12,6 +12,22 @@
   let input = $state<HTMLImageElement | null>(null);
   let imgSrc = $state("");
 
+  function findDimensions(width: number, height: number) {
+    if (width > height) {
+      return {
+        width, height: height / (height / width),
+        offsetX: 0, offsetY: (width - height) / 2
+      };
+    } else if (height > width) {
+      return {
+        width: width / (width / height), height,
+        offsetX: (height - width) / 2, offsetY: 0
+      };
+    } else {
+      return { width, height, offsetX: 0, offsetY: 0 };
+    }
+  }
+
   function onUpload(file: File) {
     const img = new Image();
     input = img;
@@ -20,13 +36,15 @@
 
     img.onload = () => {
       ctx = canvas.getContext("2d")!;
-      canvas.width = img.naturalWidth;
-      canvas.height = img.naturalHeight;
+
+      const dims = findDimensions(img.naturalWidth, img.naturalHeight);
+      canvas.width = dims.width;
+      canvas.height = dims.height;
 
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-      ctx.drawImage(img, 0, 0);
+      ctx.drawImage(img, dims.offsetX, dims.offsetY);
 
-      addOutline(ctx, canvas.width, canvas.height, 8, [0, 0, 0, 255]);
+      addOutline(ctx, canvas.width, canvas.height, 8, [0, 0, 0, 255], [255, 255, 255, 255]);
     }
   }
 
@@ -61,7 +79,8 @@
     w: number,
     h: number,
     thickness: number,
-    color: [number, number, number, number]
+    color: [number, number, number, number],
+    backgroundColor?: [number, number, number, number]
   ) {
     const src = ctx.getImageData(0, 0, w, h);
     const dst = ctx.createImageData(w, h);
